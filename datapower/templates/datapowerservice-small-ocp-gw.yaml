@@ -1,0 +1,134 @@
+apiVersion: datapower.ibm.com/v1beta3
+kind: DataPowerService
+metadata:
+  name: {{ .Values.datapowerService.name | default "small-ocp-gw" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: small-ocp
+    crd.apiconnect.ibm.com/instance: small-ocp-gw
+    crd.apiconnect.ibm.com/kind: datapower
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+    productMetric: VIRTUAL_PROCESSOR_CORE
+    datapower.ibm.com/liveness-override: 'true'
+spec:
+  version: {{ .Values.datapowerService.version | default "10.6.0.6" }}
+  license:
+    accept: true
+    license: L-EYGU-PVGRBC
+    use: production
+  extraExe:
+    - small-ocp-gw-gateway-peering
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    mode: automatic
+    rolloutHistoryLimit: 10
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets:
+    - ibm-entitlement-key
+  resources:
+    limits:
+      cpu: '1'
+      memory: 8Gi
+    requests:
+      cpu: '1'
+      memory: 8Gi
+  livenessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /healthz
+      port: 7879
+      scheme: HTTP
+    initialDelaySeconds: 60
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 5
+  readinessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /ready
+      port: 2999
+      scheme: HTTP
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 5
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                crd.apiconnect.ibm.com/instance: small-ocp-gw
+                crd.apiconnect.ibm.com/kind: datapower
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+  users:
+    - accessLevel: privileged
+      name: admin
+      passwordSecret: small-ocp-gw-admin
+  initCmds:
+    - /opt/ibm/datapower/root/node /usr/local/extra/gateway-peering.js
+  terminationGracePeriodSeconds: 30
+  healthCheck:
+    logLevel: info
+    probe:
+      port: 7879
+    watchdog:
+      enabled: true
+      hardTimeoutSeconds: 80
+      softTimeoutSeconds: 60
+  createServiceBinding: automatic
+  env:
+{{- range $e := .Values.datapowerService.env }}
+    - name: {{ $e.name }}
+      value: {{ $e.value | quote }}
+{{- end }}
+  domains:
+    {{- $existing := (lookup "datapower.ibm.com/v1beta3" "DataPowerService" .Release.Namespace "small-ocp-gw").spec.domains | default (list) }}
+  
+    {{- /* Loop through existing domains first */}}
+    {{- range $domain := $existing }}
+    - name: {{ $domain.name }}
+      dpApp:
+        config:
+          {{- range $cfg := $domain.dpApp.config }}
+          - {{ $cfg }}
+          {{- end }}
+        local:
+          {{- range $loc := $domain.dpApp.local }}
+          - {{ $loc }}
+          {{- end }}
+      {{- if $domain.passwordMap }}
+      passwordMap:
+        {{- range $pm := $domain.passwordMap }}
+        - alias: {{ $pm.alias }}
+          {{- if $pm.generate }}generate: true{{ end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  
+    {{- /* Loop through new domains from values.yaml */}}
+    {{- range $newDomain := .Values.newDomains }}
+    - name: {{ $newDomain.name }}
+      dpApp:
+        config:
+          {{- range $cfg := $newDomain.config }}
+          - {{ $cfg }}
+          {{- end }}
+        local:
+          {{- range $loc := $newDomain.local }}
+          - {{ $loc }}
+          {{- end }}
+      {{- if $newDomain.passwordMap }}
+      passwordMap:
+        {{- range $pm := $newDomain.passwordMap }}
+        - alias: {{ $pm.alias }}
+          {{- if $pm.generate }}generate: true{{ end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}  
+
+    
+    
