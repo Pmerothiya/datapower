@@ -1,5 +1,6 @@
 ENV=dev
 NAMESPACE=integration
+Service=dp-dev
 DOMAIN=new
 Helm_Release=1.0
 CONFIG_FILE=/testrepo/configuration/sftpmpgw.cfg
