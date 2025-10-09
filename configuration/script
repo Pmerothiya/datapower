@@ -1,0 +1,150 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  creationTimestamp: '2025-10-06T04:25:50Z'
+  generation: 7
+  managedFields:
+    - apiVersion: tekton.dev/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:spec':
+          .: {}
+          'f:params': {}
+          'f:steps': {}
+          'f:workspaces': {}
+      manager: Mozilla
+      operation: Update
+      time: '2025-10-06T11:44:15Z'
+  name: git-clone-task
+  namespace: dp
+  resourceVersion: '8449550'
+  uid: cb741fd1-b8f8-40e1-b65e-8014a18b0ad5
+spec:
+  params:
+    - name: url
+      type: string
+    - default: main
+      name: revision
+      type: string
+  steps:
+    - computeResources: {}
+      image: 'registry.access.redhat.com/ubi9/ubi:latest'
+      name: ''
+      script: |
+        #!/bin/sh
+        set -e
+
+        dnf install -y git
+        git --version
+        echo "Installing oc client..."
+        curl -sL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.16.20/openshift-client-linux.tar.gz -o /tmp/oc.tar.gz
+        tar -xzf /tmp/oc.tar.gz -C /usr/local/bin oc kubectl
+        chmod +x /usr/local/bin/oc /usr/local/bin/kubectl
+        rm -f /tmp/oc.tar.gz
+        oc version --client
+        # Install helm client
+        echo "Installing helm client..."
+        curl -L https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -o /usr/local/bin/helm
+        chmod +x /usr/local/bin/helm
+        helm version
+
+
+        echo "Cleaning workspace at $(workspaces.source.path)..."
+        rm -rf $(workspaces.source.path)/testrepo || echo "No files to clean up"
+        git config --global user.email "Palak.Merothiya@ibm.com"
+
+        git config --global user.name "Palak-Merothiya"
+
+        git clone https://Palak-Merothiya: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@github.ibm.com/Palak-Merothiya/Datapower.git testrepo
+
+        ls -lR testrepo
+        echo "test run"
+
+        # main work
+        source /testrepo/user_input
+        NAMESPACE=$(echo "$NAMESPACE" | xargs)
+        DOMAIN=$(echo "$DOMAIN" | xargs)
+        HELM_RELEASE=$(echo "$HELM_RELEASE" | xargs)
+        CONFIG_FILE=$(echo "$CONFIG_FILE" | xargs)
+        LOCAL_FILE=$(echo "$LOCAL_FILE" | xargs)
+
+        oc login --token=sha256~RMPQel6CGvGds1mru7IUeTcLmQRT8SVtJsINVS_KMEs --server=https://api.yt.cp.fyre.ibm.com:6443 --insecure-skip-tls-verify=true
+        # Step 3: Set project context
+        oc project $NAMESPACE 
+        if [[ $? -ne 0 ]]; then
+          echo "Error: Failed to set project '$NAMESPACE'.Ensure it exists and you have access."
+          exit 1
+        fi
+        echo "Set project to '$NAMESPACE'."
+        # Step 5: Conditionally create ConfigMap for config file
+        CONFIG_CM=""
+        if [ -n "$CONFIG_FILE" ]; then
+            echo "DEBUG: Checking config file: $CONFIG_FILE"
+            if [ -f "$CONFIG_FILE" ]; then
+                # Derive ConfigMap name from filename (remove extension and path)
+                config_base=$(basename "$CONFIG_FILE" | sed 's/\.[^.]*$//')
+                CONFIG_CM="${config_base}"
+                oc create configmap "$CONFIG_CM" --from-file="$CONFIG_FILE" -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f - -n "$NAMESPACE"
+                echo "ConfigMap '$CONFIG_CM' created/applied for config file '$CONFIG_FILE'."
+            else
+                echo "DEBUG: Config file '$CONFIG_FILE' not found or inaccessible."
+                echo "No valid config_file specified or file not found. Skipping config ConfigMap."
+            fi
+        else
+            echo "No config_file specified. Skipping config ConfigMap."
+        fi
+        # Step 6: Conditionally create ConfigMap for local file
+        sanitize_name() {
+            local name="$1"
+            echo "${name//./-}"
+        }
+
+        LOCAL_CMS=()
+        if [ -n "$LOCAL_FILE" ] && [ -f "$LOCAL_FILE" ]; then
+            if [[ "$LOCAL_FILE" == *:* ]]; then
+                local_path="${LOCAL_FILE%%:*}"
+                rel_path="${LOCAL_FILE#*:}"
+            else
+                local_path="$LOCAL_FILE"
+                filename=$(basename "$LOCAL_FILE")
+                rel_path="$filename"
+            fi
+            filename=$(basename "$local_path")
+            sanitized_filename=$(sanitize_name "$filename" | sed 's/\.[^.]*$//')
+            tar_name="${sanitized_filename}.tar.gz"
+            cm_name="${sanitized_filename}-${NAMESPACE}"
+
+            temp_dir=$(mktemp -d)
+            mkdir -p "${temp_dir}/local/$(dirname "$rel_path")"
+            cp "$local_path" "${temp_dir}/local/$rel_path"
+            tar -czvf "${temp_dir}/${tar_name}" -C "${temp_dir}/local" .
+            tar -tzf "${temp_dir}/${tar_name}"
+            oc create configmap "$cm_name" --from-file="${temp_dir}/${tar_name}" -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f - -n "$NAMESPACE"
+            echo "ConfigMap '$cm_name' created/applied for local file '$local_path' at local:///$rel_path."
+            LOCAL_CMS+=("$cm_name")
+            rm -rf "$temp_dir"
+        else
+            echo "No valid loacal_file specified or file not found. Skipping local ConfigMap."
+        fi   
+        # Step 7: Generate values.yaml
+        cat > "$ENV"_values.yaml << EOL
+        datapowerService:
+          name: mydp  # Preserves default name, not overridden
+          domains:
+            - name: $DOMAIN
+              dpApp:
+                config:
+        $(if [ -n "$CONFIG_CM" ]; then echo "          - $CONFIG_CM"; fi)
+                local:
+        $(if [ ${#LOCAL_CMS[@]} -gt 0 ]; then echo "          - ${LOCAL_CMS[0]}"; fi)
+        EOL
+        echo "Generated "$ENV"_values.yaml with DOMAIN='$DOMAIN' and ConfigMap(s) '$CONFIG_CM' and '${LOCAL_CMS[*]}'."
+        cat  "$ENV"_values.yaml
+        # Step 8: Deploy Helm chart with generated values.yaml
+        helm upgrade --install "$ENV"-datapower /testrepo/datapower -n "$NAMESPACE" -f "$ENV"_values.yaml
+
+        echo "Helm release "$ENV"-datapower  deployed/updated in namespace '$NAMESPACE' with "$ENV"_values.yaml."     
+  workspaces:
+    - description: Workspace to clone repo into
+      mountPath: /workspace/source
+      name: source
