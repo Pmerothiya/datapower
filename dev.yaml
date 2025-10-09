@@ -1,0 +1,173 @@
+apiVersion: datapower.ibm.com/v1beta3
+kind: DataPowerService
+metadata:
+  creationTimestamp: '2025-09-23T08:57:41Z'
+  generation: 3
+  labels:
+    backup.datapower.ibm.com/component: datapowerservice
+  managedFields:
+    - apiVersion: datapower.ibm.com/v1beta3
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:labels':
+            .: {}
+            'f:backup.datapower.ibm.com/component': {}
+        'f:spec':
+          .: {}
+          'f:domains': {}
+          'f:license':
+            .: {}
+            'f:accept': {}
+            'f:license': {}
+            'f:use': {}
+          'f:replicas': {}
+          'f:resources':
+            .: {}
+            'f:limits':
+              .: {}
+              'f:memory': {}
+            'f:requests':
+              .: {}
+              'f:cpu': {}
+              'f:memory': {}
+          'f:users': {}
+          'f:version': {}
+      manager: Mozilla
+      operation: Update
+      time: '2025-10-07T04:42:13Z'
+    - apiVersion: datapower.ibm.com/v1beta3
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:status':
+          'f:phase': {}
+          'f:conditions': {}
+          .: {}
+          'f:firmware': {}
+          'f:versions':
+            .: {}
+            'f:available':
+              .: {}
+              'f:channels': {}
+              'f:versions': {}
+            'f:reconciled': {}
+          'f:replicas': {}
+          'f:mgmtPorts': {}
+          'f:nodes': {}
+          'f:customImages': {}
+          'f:labelSelector': {}
+      manager: datapower-operator
+      operation: Update
+      subresource: status
+      time: '2025-10-07T04:52:37Z'
+  name: dp-dev
+  namespace: dp-dev
+  resourceVersion: '830947572'
+  uid: 6ae0e549-6ffc-47ab-b7f6-97d76288c676
+spec:
+  license:
+    accept: true
+    license: L-EYGU-PVGRBC
+    use: nonproduction
+  resources:
+    limits:
+      cpu: '1'
+      memory: 4Gi
+    requests:
+      cpu: '1'
+      memory: 4Gi
+  readinessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /healthz
+      port: 7879
+      scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 5
+  users:
+    - accessLevel: privileged
+      name: admin
+      passwordSecret: admin-secret
+  terminationGracePeriodSeconds: 30
+  healthCheck:
+    logLevel: info
+    probe:
+      port: 7879
+    watchdog:
+      enabled: true
+      hardTimeoutSeconds: 80
+      softTimeoutSeconds: 60
+  createServiceBinding: automatic
+  livenessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /healthz
+      port: 7879
+      scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 5
+  domains:
+    - dpApp:
+        config:
+          - web-console
+      name: default
+    - dpApp:
+        config:
+          - dev-services
+      name: dev
+  imagePullPolicy: IfNotPresent
+  version: 10.6-lts
+  podManagementPolicy: Parallel
+  replicas: 1
+status:
+  customImages: false
+  nodes:
+    - dp-dev-0
+  mgmtPorts:
+    - name: rest-mgmt
+      port: 5554
+  labelSelector: 'app.kubernetes.io/instance=dp-dev-dp-dev,app.kubernetes.io/name=datapower'
+  conditions:
+    - lastTransitionTime: '2025-10-03T19:15:11Z'
+      message: 'StatefulSet replicas ready: 1/1'
+      reason: StatefulSetReady
+      status: 'True'
+      type: Ready
+  phase: Running
+  firmware:
+    - info:
+        build: '378900'
+        buildDate: '2025/09/26 03:38:16'
+        version: IDG.10.6.0.7
+      pods:
+        - dp-dev-0
+  versions:
+    available:
+      channels:
+        - licenses:
+            - displayName: IBM DataPower Gateway Virtual Edition v10.6.0
+              link: 'https://ibm.biz/BdKLjV'
+              matchesCurrentType: true
+              name: L-EYGU-PVGRBC
+            - displayName: IBM DataPower Gateway Developers for Docker v10.6.0
+              link: 'https://ibm.biz/BdKLjh'
+              matchesCurrentType: false
+              name: L-PYHE-KX6R8F
+          name: 10.6-lts
+      versions:
+        - licenses:
+            - displayName: IBM DataPower Gateway Virtual Edition v10.6.0
+              link: 'https://ibm.biz/BdKLjV'
+              matchesCurrentType: true
+              name: L-EYGU-PVGRBC
+            - displayName: IBM DataPower Gateway Developers for Docker v10.6.0
+              link: 'https://ibm.biz/BdKLjh'
+              matchesCurrentType: false
+              name: L-PYHE-KX6R8F
+          name: 10.6.0.7
+    reconciled: 10.6.0.7
+  replicas: 1
