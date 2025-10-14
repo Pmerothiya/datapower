@@ -1,0 +1,128 @@
+apiVersion: datapower.ibm.com/v1beta3
+kind: DataPowerService
+metadata:
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+  name: {{ .Values.datapowerService.name }}
+  namespace: {{ .Values.datapowerService.namespace }}  
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    backup.datapower.ibm.com/component: datapowerservice
+spec:
+  version: 10.6-cd
+  license:
+    accept: true
+    license: L-VRYH-429UTT
+    use: nonproduction
+  cryptoMode: permissive
+  resources:
+    limits:
+      cpu: '1'
+      memory: 4Gi
+    requests:
+      cpu: '1'
+      memory: 4Gi
+  readinessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /healthz
+      port: 7879
+      scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 5
+  users:
+    - accessLevel: privileged
+      name: admin
+      passwordSecret: your-admin-credentials-here
+  terminationGracePeriodSeconds: 30
+  healthCheck:
+    logLevel: info
+    probe:
+      port: 7879
+    watchdog:
+      enabled: true
+      hardTimeoutSeconds: 80
+      softTimeoutSeconds: 60
+  createServiceBinding: automatic
+  livenessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /healthz
+      port: 7879
+      scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 5  
+  domains:
+    {{- /* Fetch domains from values.yaml */}}
+    {{- $valuesDomains := .Values.datapowerService.domains | default (list) }}
+    {{- /* Fetch existing domains via lookup */}}
+    {{- $existingDomains := (lookup "datapower.ibm.com/v1beta3" "DataPowerService" .Release.Namespace "mydp").spec.domains | default (list) }}
+    {{- /* Build merged list */}}
+    {{- $mergedDomains := list }}
+    {{- /* Process values domains: merge if exists, add if new */}}
+    {{- range $vDomain := $valuesDomains }}
+      {{- $found := false }}
+      {{- $mergedConfig := $vDomain.dpApp.config | default (list) }}
+      {{- $mergedLocal := $vDomain.dpApp.local | default (list) }}
+      {{- $mergedCerts := $vDomain.certs | default (list) }}
+      {{- $mergedPasswordMap := $vDomain.passwordMap | default (list) }}
+      {{- range $eIndex, $eDomain := $existingDomains }}
+        {{- if eq $vDomain.name $eDomain.name }}
+          {{- $found = true }}
+          {{- $mergedConfig = concat ($eDomain.dpApp.config | default list) $mergedConfig }}
+          {{- $mergedLocal = concat ($eDomain.dpApp.local | default list) $mergedLocal }}
+          {{- $mergedCerts = concat ($eDomain.certs | default list) $mergedCerts }}
+          {{- $mergedPasswordMap = concat ($eDomain.passwordMap | default list) $mergedPasswordMap }}
+          {{- $merged := dict "name" $vDomain.name "dpApp" (dict "config" $mergedConfig "local" $mergedLocal) "certs" $mergedCerts "passwordMap" $mergedPasswordMap }}
+          {{- $mergedDomains = append $mergedDomains $merged }}
+        {{- end }}
+      {{- end }}
+      {{- if not $found }}
+        {{- $merged := dict "name" $vDomain.name "dpApp" (dict "config" $mergedConfig "local" $mergedLocal) "certs" $mergedCerts "passwordMap" $mergedPasswordMap }}
+        {{- $mergedDomains = append $mergedDomains $merged }}
+      {{- end }}
+    {{- end }}
+    {{- /* Add existing domains that weren't in values */}}
+    {{- range $eDomain := $existingDomains }}
+      {{- $found := false }}
+      {{- range $vDomain := $valuesDomains }}
+        {{- if eq $vDomain.name $eDomain.name }}
+          {{- $found = true }}
+        {{- end }}
+      {{- end }}
+      {{- if not $found }}
+        {{- $mergedDomains = append $mergedDomains $eDomain }}
+      {{- end }}
+    {{- end }}
+    {{- /* Output the merged domains */}}
+    {{- range $domain := $mergedDomains }}
+    - name: {{ $domain.name }}
+      {{- if $domain.certs }}
+      certs:
+        {{- range $cert := $domain.certs }}
+        - certType: {{ $cert.certType }}
+          secret: {{ $cert.secret }}
+        {{- end }}
+      {{- end }}
+      dpApp:
+        config:
+          {{- range $cfg := $domain.dpApp.config }}
+          - {{ $cfg }}
+          {{- end }}
+        local:
+          {{- range $loc := $domain.dpApp.local }}
+          - {{ $loc }}
+          {{- end }}
+      {{- if $domain.passwordMap }}
+      passwordMap:
+        {{- range $pm := $domain.passwordMap }}
+        - alias: {{ $pm.alias }}
+          {{- if $pm.generate }}generate: true{{ end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
