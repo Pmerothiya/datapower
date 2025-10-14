@@ -1,0 +1,18 @@
+# Step 7: Conditionally create secret for certificate and optionally key
+
+if [ -f "$CERT_FILE" ]; then
+    if [ -f "$KEY_FILE" ]; then
+        oc create secret generic "$CERT_SECRET_NAME" --from-file="$CERT_FILE" --from-file="$KEY_FILE" -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f - -n "$NAMESPACE"
+        echo "Secret '$CERT_SECRET_NAME' created/applied with cert '$CERT_FILE' and key '$KEY_FILE'."
+    else
+        oc create secret generic "$CERT_SECRET_NAME" --from-file=cert.pem="$CERT_FILE" -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f - -n "$NAMESPACE"
+        echo "Secret '$CERT_SECRET_NAME' created/applied with cert '$CERT_FILE' (no key file provided)."
+    fi
+else
+    echo "DEBUG: Certificate file '$CERT_FILE' not found or inaccessible."
+    echo "No valid certificate file specified. Skipping secret creation."
+
+$(if [ -n "$CERT_SECRET_NAME" ]; then
+    echo "        - certType: usrcerts"
+    echo "          secret: $CERT_SECRET_NAME"
+fi)	
