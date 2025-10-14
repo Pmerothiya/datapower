@@ -1,7 +1,9 @@
 ENV=dev
-NAMESPACE=integration
-Service=dp-dev
-DOMAIN=new
-Helm_Release=1.0
+NAMESPACE=dp
+SERVICE=mydp
+DOMAIN=sftptest
+RELEASE_NAME=dev-datapower
 CONFIG_FILE=/testrepo/configuration/sftpmpgw.cfg
 LOCAL_FILE=/testrepo/configuration/schema.xsd
+CERT_FILE=/testrepo/configuration/client2.message.flow.ibm.com-sscert.pem
+KEY_FILE=/testrepo/configuration/client2.message.flow.ibm.com-privkey.pem
