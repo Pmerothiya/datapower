@@ -1,0 +1,1 @@
+oc patch datapowerservice small-ocp-gw -n integration --type merge -p '{"metadata":{"labels":{"app.kubernetes.io/managed-by":"Helm"},"annotations":{"meta.helm.sh/release-name":"dev-datapower","meta.helm.sh/release-namespace":"integration"}}}'
