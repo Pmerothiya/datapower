@@ -1,0 +1,25 @@
+cat > "$ENV"_values.yaml << EOL
+datapowerService:
+  name: $SERVICE
+  namespace: $NAMESPACE
+  domains:
+    - name: $DOMAIN
+$(if [ -n "$CERT_SECRET" ] || [ -n "$KEY_SECRET" ]; then
+    echo "      certs:"
+    if [ -n "$CERT_SECRET" ]; then
+        echo "        - certType: usrcerts"
+        echo "          secret: $CERT_SECRET"
+    fi
+    if [ -n "$KEY_SECRET" ]; then
+        echo "        - certType: usrcerts"
+        echo "          secret: $KEY_SECRET"
+    fi
+fi)
+      dpApp:
+        config:
+$(if [ -n "$CONFIG_CM" ]; then echo "          - $CONFIG_CM"; fi)
+        local:
+$(if [ ${#LOCAL_CMS[@]} -gt 0 ]; then echo "          - ${LOCAL_CMS[0]}"; fi)
+EOL
+echo "Generated "$ENV"_values.yaml with DOMAIN='$DOMAIN', ConfigMap(s) '$CONFIG_CM' and '${LOCAL_CMS[*]}', Cert Secret '$CERT_SECRET', Key Secret '$KEY_SECRET'."
+cat "$ENV"_values.yaml
