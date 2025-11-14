@@ -1,3 +1,47 @@
+Datapower  Rollback Guide
+This document provides step-by-step instructions for rollback Datapower service using pipeline.
+Rollback  to dev ,QUA or UAT
+
+
+Navigate to:
+Builds → Select feature/develop,qua or uat branch → Run Pipeline
+
+
+give the details like---
+RELEASE_NAME- for dev- dev-datapwer, for qua- qua-datapower, for uat- uat-datapower
+REVISION_NUMBER--- you can get this info from deployment-info/dev/helm_history_dev-datapower.txt(respectively in  qua or uat)
+Sample Content:
+
+
+REVISION	UPDATED                 	STATUS    	CHART               	APP VERSION	DESCRIPTION
+32      	Thu Oct 23 12:40:57 2025	superseded	datapowerchart-0.1.0	1.16.0     	Upgrade complete
+33      	Thu Oct 30 12:35:43 2025	superseded	datapowerchart-0.1.0	1.16.0     	Upgrade complete
+34      	Thu Nov  6 13:50:50 2025	deployed  	datapowerchart-0.1.0	1.16.0     	Upgrade complete
+NAMESPACE_NAME--- you have to provide the namespace name of datapower service(dp-dev,dp-qua,dp-uat)
+after giving this info it will be rollbacked to previous version
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 *Datapower Deployment Guide*
 
 This document provides step-by-step instructions for deploying Datapower deployment using pipeline.
