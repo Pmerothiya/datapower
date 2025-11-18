@@ -1,0 +1,67 @@
+# ==========================================
+# Step 4.5: Prevent duplicate entries in values.yaml using jq only
+# ==========================================
+
+echo "Checking existing DataPowerService for duplicates…"
+
+existing_json=$(oc get datapowerservice "$SERVICE" -n "$NAMESPACE" -o json 2>/dev/null)
+
+if [ -n "$existing_json" ]; then
+
+    # Check duplicate configmap
+    if [ -n "$CONFIG_CM" ]; then
+        exists_in_dp=$(echo "$existing_json" | jq -r \
+            --arg domain "$DOMAIN" \
+            --arg cfg "$CONFIG_CM" '
+            .spec.domains[]
+            | select(.name==$domain)
+            | .dpApp.config[]?
+            | select(.==$cfg)
+            ')
+
+        if [ -n "$exists_in_dp" ]; then
+            echo "SKIP: ConfigMap '$CONFIG_CM' already exists in DataPowerService → will not add to values.yaml"
+            CONFIG_CM=""
+        fi
+    fi
+
+    # Check duplicate local configmaps
+    if [ ${#LOCAL_CMS[@]} -gt 0 ]; then
+        for i in "${!LOCAL_CMS[@]}"; do
+            cm="${LOCAL_CMS[$i]}"
+
+            exists_local=$(echo "$existing_json" | jq -r \
+                --arg domain "$DOMAIN" \
+                --arg cm "$cm" '
+                .spec.domains[]
+                | select(.name==$domain)
+                | .dpApp.local[]?
+                | select(.==$cm)
+                ')
+
+            if [ -n "$exists_local" ]; then
+                echo "SKIP: Local CM '$cm' already exists in DataPowerService → will not add to values.yaml"
+                unset 'LOCAL_CMS[i]'
+            fi
+        done
+    fi
+
+    # Check duplicate secret
+    if [ -n "$CERT_SECRET_NAME" ]; then
+        exists_secret=$(echo "$existing_json" | jq -r \
+            --arg domain "$DOMAIN" \
+            --arg sec "$CERT_SECRET_NAME" '
+            .spec.domains[]
+            | select(.name==$domain)
+            | .certs[]?.secret
+            | select(.==$sec)
+            ')
+
+        if [ -n "$exists_secret" ]; then
+            echo "SKIP: Secret '$CERT_SECRET_NAME' already exists in DataPowerService → will not add to values.yaml"
+            CERT_SECRET_NAME=""
+        fi
+    fi
+else
+    echo "No existing DataPowerService found — nothing to check for duplicates."
+fi
