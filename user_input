@@ -1,9 +1,14 @@
+#dev,test,prod-provide the env as these format
 ENV=dev
-NAMESPACE=dp
-SERVICE=mydp
-DOMAIN=sftptest
+NAMESPACE=dp-dev
+SERVICE=dp-dev
+DOMAIN=new
+Helm_Release=1.0
 RELEASE_NAME=dev-datapower
-CONFIG_FILE=/testrepo/configuration/sftpmpgw.cfg
-LOCAL_FILE=/testrepo/configuration/schema.xsd
-CERT_FILE=/testrepo/configuration/client2.message.flow.ibm.com-sscert.pem
-KEY_FILE=/testrepo/configuration/client2.message.flow.ibm.com-privkey.pem
+CONFIG_FILE=../Configuration/dev/source/destination.cfg 
+LOCAL_FILE=../Configuration/dev/local/dev/
+CERT_FILE="../Configuration/dev/cert/dp-dev.apps.eipdev.resbank.co.za-privkey.pem,../Configuration/dev/cert/EIP_DPPrivateKey.pem,../Configuration/dev/cert/IssuingCA.crt,../Configuration/dev/cert/PolicyCA.crt,../Configuration/dev/cert/RootCA.crt,../Configuration/dev/cert/SARS_Public_2025.cer,../Configuration/dev/cert/dp-dev.apps.eipdev.resbank.co.za.pem,../Configuration/dev/cert/eimq1_d_01.cer"
+xml_file=../Configuration/dev/service/export-midrates.xml
+src_cfg=../Configuration/dev/source/source-latest.cfg
+dest_cfg=../Configuration/dev/destination/destination.cfg
+mapping_file=../Configuration/dev/mapping/mapping.txt
