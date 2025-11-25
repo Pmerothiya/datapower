@@ -1,0 +1,1229 @@
+{
+	"info": {
+		"_postman_id": "b2c366a4-a97c-41f9-bb9a-2d29b61cc145",
+		"name": "AppWorks API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7115825"
+	},
+	"item": [
+		{
+			"name": "getToken",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 200 OK status code",
+							"pm.test(\"Status code is 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Test: Validate access_token is present",
+							"pm.test(\"Access token is present in response\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('access_token');",
+							"    pm.expect(jsonData.access_token).to.be.a('string');",
+							"    pm.expect(jsonData.access_token).to.not.be.empty;",
+							"});",
+							"",
+							"// Test: Validate token_type is \"bearer\"",
+							"pm.test(\"Token type is bearer\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('token_type');",
+							"    pm.expect(jsonData.token_type).to.eql('Bearer');",
+							"});",
+							"",
+							"// Test: Validate expires_in is present",
+							"pm.test(\"Expires_in field is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('expires_in');",
+							"    pm.expect(jsonData.expires_in).to.be.a('number');",
+							"    pm.expect(jsonData.expires_in).to.be.above(0);",
+							"});",
+							"",
+							"// Save access_token to environment variable",
+							"pm.test(\"Save access token to environment variable\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.access_token) {",
+							"        pm.environment.set(\"access_token\", jsonData.access_token);",
+							"    }",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 3000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(3000);",
+							"});",
+							"",
+							"// Test: Error handling for 401 Unauthorized",
+							"if (pm.response.code === 401) {",
+							"    pm.test(\"401 Unauthorized - Invalid credentials\", function () {",
+							"        pm.expect(pm.response.code).to.eql(401);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 500 Internal Server Error",
+							"if (pm.response.code === 500) {",
+							"    pm.test(\"500 Internal Server Error - Server issue\", function () {",
+							"        pm.expect(pm.response.code).to.eql(500);",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "{{clientId}}",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{clientSecret}}",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "AppWorks",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "fred",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "smith",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/wst/oauth2/token",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"wst",
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Generic",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 201 Created status code",
+							"pm.test(\"Status code is 201 Created\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"// Test: Validate response body structure with Identity and _links objects",
+							"pm.test(\"Response has Identity and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Id field is present and numeric string",
+							"pm.test(\"Identity.Id is present and numeric\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    pm.expect(jsonData.Identity.Id).to.be.a('string');",
+							"    pm.expect(jsonData.Identity.Id).to.not.be.empty;",
+							"    pm.expect(jsonData.Identity.Id).to.match(/^\\d+$/);",
+							"});",
+							"",
+							"// Test: Validate _links.self.href is present",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Save created entity ID to collection variable",
+							"pm.test(\"Save created entity ID to collection variable\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.Identity && jsonData.Identity.Id) {",
+							"        pm.collectionVariables.set(\"genericID\", jsonData.Identity.Id);",
+							"    }",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 5000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+							"});",
+							"",
+							"// Test: Error handling for 400 Bad Request",
+							"if (pm.response.code === 400) {",
+							"    pm.test(\"400 Bad Request - Invalid input data\", function () {",
+							"        pm.expect(pm.response.code).to.eql(400);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 401 Unauthorized",
+							"if (pm.response.code === 401) {",
+							"    pm.test(\"401 Unauthorized - Authentication required\", function () {",
+							"        pm.expect(pm.response.code).to.eql(401);",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"submissionPackReference\": \"string\",\r\n    \"entityReference\": \"string\",\r\n    \"entityName\": \"string\",\r\n    \"submissionPackVersion\": \"string\",\r\n    \"requestType\": \"Generic\",\r\n    \"returnDueDate\": \"2021-07-16T18:02:46.7918081\",\r\n    \"industryType\": \"string\",\r\n    \"industrySubType\": \"string\",\r\n    \"returnEndDate\": \"2021-09-02\",\r\n    \"submissionDate\": \"2021-09-02\",\r\n    \"revisionNumber\": \"string\",\r\n    \"submissionPackName\": \"string\",\r\n    \"resubmissionState\": \"Granted\",\r\n    \"submissionType\": \"test\" \r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/generic",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"generic"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Generic",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 200 OK status code",
+							"pm.test(\"Status code is 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Test: Validate complete response body structure",
+							"pm.test(\"Response has Properties, Identity, Lifecycle, and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Properties');",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('Lifecycle');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Identity object with Id and ItemStatus",
+							"pm.test(\"Identity object has Id and ItemStatus\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    ",
+							"    // Accept Id as either string or number",
+							"    var idValue = jsonData.Identity.Id;",
+							"    var isString = typeof idValue === 'string';",
+							"    var isNumber = typeof idValue === 'number';",
+							"    ",
+							"    pm.expect(isString || isNumber).to.be.true;",
+							"    ",
+							"    // If it's a string, verify it's not empty and contains only numeric characters",
+							"    if (isString) {",
+							"        pm.expect(idValue).to.not.be.empty;",
+							"        pm.expect(idValue).to.match(/^\\d+$/);",
+							"    }",
+							"    ",
+							"    pm.expect(jsonData.Identity).to.have.property('ItemStatus');",
+							"});",
+							"",
+							"// Test: Validate Lifecycle state information",
+							"pm.test(\"Lifecycle object has valid state information\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Lifecycle).to.be.an('object');",
+							"    if (jsonData.Lifecycle.State) {",
+							"        pm.expect(jsonData.Lifecycle.State).to.be.a('string');",
+							"    }",
+							"});",
+							"",
+							"// Test: Validate _links structure",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Test: Validate Properties object exists and is not empty",
+							"pm.test(\"Properties object exists and contains data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Properties).to.be.an('object');",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 3000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(3000);",
+							"});",
+							"",
+							"// Test: Error handling for 404 Not Found",
+							"if (pm.response.code === 404) {",
+							"    pm.test(\"404 error message is present\", function () {",
+							"        var jsonData = pm.response.json();",
+							"        pm.expect(jsonData).to.have.property('message');",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/generic/{{genericID}}",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"generic",
+						"{{genericID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Documents",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 201 Created status code",
+							"pm.test(\"Status code is 201 Created\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"// Test: Validate response body structure with Identity and _links objects",
+							"pm.test(\"Response has Identity and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Id field is present and numeric",
+							"pm.test(\"Identity.Id is present and numeric\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    pm.expect(jsonData.Identity.Id).to.be.a('number');",
+							"    pm.expect(jsonData.Identity.Id).to.be.above(0);",
+							"});",
+							"",
+							"// Test: Validate _links.self.href is present",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Save created entity ID to collection variable",
+							"pm.test(\"Save created entity ID to collection variable\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.Identity && jsonData.Identity.Id) {",
+							"        pm.collectionVariables.set(\"created_entity_id\", jsonData.Identity.Id);",
+							"    }",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 5000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+							"});",
+							"",
+							"// Test: Error handling for 400 Bad Request",
+							"if (pm.response.code === 400) {",
+							"    pm.test(\"400 Bad Request - Invalid input data\", function () {",
+							"        pm.expect(pm.response.code).to.eql(400);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 401 Unauthorized",
+							"if (pm.response.code === 401) {",
+							"    pm.test(\"401 Unauthorized - Authentication required\", function () {",
+							"        pm.expect(pm.response.code).to.eql(401);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 500 Internal Server Error",
+							"if (pm.response.code === 500) {",
+							"    pm.test(\"500 Internal Server Error - Server issue\", function () {",
+							"        pm.expect(pm.response.code).to.eql(500);",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"DocumentName\": \"OrganisationChart.pdf\",\r\n    \"MimeType\": \".pdf\",\r\n    \"BusinessWorkSpaceID\": 9830471,\r\n    \"Folder\": \"Supporting Documents\",\r\n    \"IsMajorVersion\": true,\r\n    \"KeepPrivateToUser\": false,\r\n    \"File\": {\r\n        \"value\": \"JVBERi0xLjcNCiW1tbW1DQoxIDAgb2JqDQo8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFIvTGFuZyhlbi1aQSkgL1N0cnVjdFRyZWVSb290IDEwIDAgUi9NYXJrSW5mbzw8L01hcmtlZCB0cnVlPj4vTWV0YWRhdGEgMjAgMCBSL1ZpZXdlclByZWZlcmVuY2VzIDIxIDAgUj4+DQplbmRvYmoNCjIgMCBvYmoNCjw8L1R5cGUvUGFnZXMvQ291bnQgMS9LaWRzWyAzIDAgUl0gPj4NCmVuZG9iag0KMyAwIG9iag0KPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNSAwIFI+Pi9FeHRHU3RhdGU8PC9HUzcgNyAwIFIvR1M4IDggMCBSPj4vUHJvY1NldFsvUERGL1RleHQvSW1hZ2VCL0ltYWdlQy9JbWFnZUldID4+L01lZGlhQm94WyAwIDAgNTk1LjMyIDg0MS45Ml0gL0NvbnRlbnRzIDQgMCBSL0dyb3VwPDwvVHlwZS9Hcm91cC9TL1RyYW5zcGFyZW5jeS9DUy9EZXZpY2VSR0I+Pi9UYWJzL1MvU3RydWN0UGFyZW50cyAwPj4NCmVuZG9iag0KNCAwIG9iag0KPDwvRmlsdGVyL0ZsYXRlRGVjb2RlL0xlbmd0aCAxNjE+Pg0Kc3RyZWFtDQp4nK2OTQuCQBiE7y+8/2GOGrTursrugnjwIykQihY6REfzVFD6/0nFi/fmNjA8zyA6I8uitjxWkHmOoirxYZJCzrHWKEikLhWxhk2UcBrfjum2w5up8EzRQUEpIRP4J9O8llAwWkidwKROJBb+Ne2aq0E/TGj0S7Nra5juwdiF+zgYxvABf2KqJ/CF6Q9HrBPKbo4s/lWLrQ91W+IHCkc1DQ0KZW5kc3RyZWFtDQplbmRvYmoNCjUgMCBvYmoNCjw8L1R5cGUvRm9udC9TdWJ0eXBlL1RydWVUeXBlL05hbWUvRjEvQmFzZUZvbnQvQkNERUVFK0NhbGlicmkvRW5jb2RpbmcvV2luQW5zaUVuY29kaW5nL0ZvbnREZXNjcmlwdG9yIDYgMCBSL0ZpcnN0Q2hhciAzMi9MYXN0Q2hhciAxMTYvV2lkdGhzIDE4IDAgUj4+DQplbmRvYmoNCjYgMCBv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MCAwIG9iag0KPDwvVHlwZS9NZXRhZGF0YS9TdWJ0eXBlL1hNTC9MZW5ndGggMzA5Nj4+DQpzdHJlYW0NCjw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+PHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iMy4xLTcwMSI+CjxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+CjxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiICB4bWxuczpwZGY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8iPgo8cGRmOlByb2R1Y2VyPk1pY3Jvc29mdMKuIFdvcmQgZm9yIE1pY3Jvc29mdCAzNjU8L3BkZjpQcm9kdWNlcj48L3JkZjpEZXNjcmlwdGlvbj4KPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyI+CjxkYzpjcmVhdG9yPjxyZGY6U2VxPjxyZGY6bGk+RW1tYW51ZWwgVHNoaWthbGFuZ2U8L3JkZjpsaT48L3JkZjpTZXE+PC9kYzpjcmVhdG9yPjwvcmRmOkRlc2NyaXB0aW9uPgo8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIj4KPHhtcDpDcmVhdG9yVG9vbD5NaWNyb3NvZnTCriBXb3JkIGZvciBNaWNyb3NvZnQgMzY1PC94bXA6Q3JlYXRvclRvb2w+PHhtcDpDcmVhdGVEYXRlPjIwMjItMTAtMjVUMTE6Mzk6MzYrMDI6MDA8L3htcDpDcmVhdGVEYXRlPjx4bXA6TW9kaWZ5RGF0ZT4yMDIyLTEwLTI1VDExOjM5OjM2KzAyOjAwPC94bXA6TW9kaWZ5RGF0ZT48L3JkZjpEZXNjcmlwdGlvbj4KPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIj4KPHhtcE1NOkRvY3VtZW50SUQ+dXVpZDoyQjIzMUUzNi01RTAzLTQyNUMtQUU4RC0yN0IxN0M2QUE5RjU8L3htcE1NOkRvY3VtZW50SUQ+PHhtcE1NOkluc3RhbmNlSUQ+dXVpZDoyQjIzMUUzNi01RTAzLTQyNUMtQUU4RC0yN0IxN0M2QUE5RjU8L3htcE1NOkluc3RhbmNlSUQ+PC9yZGY6RGVzY3JpcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAo8L3JkZjpSREY+PC94OnhtcG1ldGE+PD94cGFja2V0IGVuZD0idyI/Pg0KZW5kc3RyZWFtDQplbmRvYmoNCjIxIDAgb2JqDQo8PC9EaXNwbGF5RG9jVGl0bGUgdHJ1ZT4+DQplbmRvYmoNCjIyIDAgb2JqDQo8PC9UeXBlL1hSZWYvU2l6ZSAyMi9XWyAxIDQgMl0gL1Jvb3QgMSAwIFIvSW5mbyA5IDAgUi9JRFs8MzYxRTIzMkIwMzVFNUM0MkFFOEQyN0IxN0M2QUE5RjU+PDM2MUUyMzJCMDM1RTVDNDJBRThEMjdCMTdDNkFBOUY1Pl0gL0ZpbHRlci9GbGF0ZURlY29kZS9MZW5ndGggODY+Pg0Kc3RyZWFtDQp4nGNgAIL//xmBpCADA4haBqHugSnGN2CK6TqYYq4HUyx5EGoxhLoBlAdrZ4JQzBCKBUKxQihGCAVVyQbUx/oVrJ29EUxxeIGpuNdgKjuMgQEAISIMVw0KZW5kc3RyZWFtDQplbmRvYmoNCnhyZWYNCjAgMjMNCjAwMDAwMDAwMTAgNjU1MzUgZg0KMDAwMDAwMDAxNyAwMDAwMCBuDQowMDAwMDAwMTY2IDAwMDAwIG4NCjAwMDAwMDAyMjIgMDAwMDAgbg0KMDAwMDAwMDQ5MiAwMDAwMCBuDQowMDAwMDAwNzI3IDAwMDAwIG4NCjAwMDAwMDA4OTUgMDAwMDAgbg0KMDAwMDAwMTEzNCAwMDAwMCBuDQowMDAwMDAxMTg3IDAwMDAwIG4NCjAwMDAwMDEyNDAgMDAwMDAgbg0KMDAwMDAwMDAxMSA2NTUzNSBmDQowMDAwMDAwMDEyIDY1NTM1IGYNCjAwMDAwMDAwMTMgNjU1MzUgZg0KMDAwMDAwMDAxNCA2NTUzNSBmDQowMDAwMDAwMDE1IDY1NTM1IGYNCjAwMDAwMDAwMTYgNjU1MzUgZg0KMDAwMDAwMDAxNyA2NTUzNSBmDQowMDAwMDAwMDAwIDY1NTM1IGYNCjAwMDAwMDE5MjEgMDAwMDAgbg0KMDAwMDAwMjEyMiAwMDAwMCBuDQowMDAwMDI0Mjk5IDAwMDAwIG4NCjAwMDAwMjc0NzggMDAwMDAgbg0KMDAwMDAyNzUyMyAwMDAwMCBuDQp0cmFpbGVyDQo8PC9TaXplIDIzL1Jvb3QgMSAwIFIvSW5mbyA5IDAgUi9JRFs8MzYxRTIzMkIwMzVFNUM0MkFFOEQyN0IxN0M2QUE5RjU+PDM2MUUyMzJCMDM1RTVDNDJBRThEMjdCMTdDNkFBOUY1Pl0gPj4NCnN0YXJ0eHJlZg0KMjc4MDgNCiUlRU9GDQp4cmVmDQowIDANCnRyYWlsZXINCjw8L1NpemUgMjMvUm9vdCAxIDAgUi9JbmZvIDkgMCBSL0lEWzwzNjFFMjMyQjAzNUU1QzQyQUU4RDI3QjE3QzZBQTlGNT48MzYxRTIzMkIwMzVFNUM0MkFFOEQyN0IxN0M2QUE5RjU+XSAvUHJldiAyNzgwOC9YUmVmU3RtIDI3NTIzPj4NCnN0YXJ0eHJlZg0KMjg0MjQNCiUlRU9G\",\r\n        \"isBase64\": true\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/documents",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"documents"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Registrations",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 201 Created status code",
+							"pm.test(\"Status code is 201 Created\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"// Test: Validate response body structure with Identity and _links objects",
+							"pm.test(\"Response has Identity and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Id field is present and numeric",
+							"pm.test(\"Identity.Id is present and numeric\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    ",
+							"    var id = jsonData.Identity.Id;",
+							"    var isString = typeof id === 'string';",
+							"    var isNumber = typeof id === 'number';",
+							"    ",
+							"    pm.expect(isString || isNumber).to.be.true;",
+							"    ",
+							"    var numericValue = isString ? Number(id) : id;",
+							"    pm.expect(numericValue).to.not.be.NaN;",
+							"    pm.expect(numericValue).to.be.above(0);",
+							"});",
+							"",
+							"// Test: Validate _links.self.href is present",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Save created entity ID to collection variable",
+							"pm.test(\"Save created entity ID to collection variable\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.Identity && jsonData.Identity.Id) {",
+							"        pm.collectionVariables.set(\"created_entity_id\", jsonData.Identity.Id);",
+							"    }",
+							"});",
+							"",
+							"// Extract and save registrationID to environment variable",
+							"var jsonData = pm.response.json();",
+							"if (jsonData.Identity && jsonData.Identity.Id) {",
+							"    pm.environment.set(\"registrationID\", jsonData.Identity.Id);",
+							"    console.log(\"Saved registrationID to environment: \" + jsonData.Identity.Id);",
+							"}",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 5000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+							"});",
+							"",
+							"// Test: Error handling for 400 Bad Request",
+							"if (pm.response.code === 400) {",
+							"    pm.test(\"400 Bad Request - Invalid input data\", function () {",
+							"        pm.expect(pm.response.code).to.eql(400);",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"submissionPackReference\": \"string\",\r\n    \"entityReference\": \"string\",\r\n    \"entityName\": \"string\",\r\n    \"submissionPackVersion\": \"string\",\r\n    \"requestType\": \"Initial\",\r\n    \"returnDueDate\": \"2021-07-16T18:02:46.7918081\",\r\n    \"industryType\": \"string\",\r\n    \"industrySubType\": \"string\",\r\n    \"returnEndDate\": \"2021-09-02\",\r\n    \"submissionDate\": \"2021-09-02\",\r\n    \"revisionNumber\": \"string\",\r\n    \"submissionPackName\": \"string\",\r\n    \"resubmissionState\": \"Granted\",\r\n    \"questionnaireRequired\": \"false\" \r\n\r\n}\r\n"
+				},
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/registrations",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"registrations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Registrations",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 200 OK status code",
+							"pm.test(\"Status code is 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Test: Validate complete response body structure",
+							"pm.test(\"Response has Properties, Identity, Lifecycle, and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Properties');",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('Lifecycle');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Identity object with Id and ItemStatus",
+							"pm.test(\"Identity object has Id and ItemStatus\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    pm.expect(jsonData.Identity.Id).to.be.a('number');",
+							"    pm.expect(jsonData.Identity).to.have.property('ItemStatus');",
+							"});",
+							"",
+							"// Test: Validate Lifecycle state information",
+							"pm.test(\"Lifecycle object has valid state information\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Lifecycle).to.be.an('object');",
+							"    if (jsonData.Lifecycle.State) {",
+							"        pm.expect(jsonData.Lifecycle.State).to.be.a('string');",
+							"    }",
+							"});",
+							"",
+							"// Test: Validate _links structure",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Test: Validate Properties object exists and is not empty",
+							"pm.test(\"Properties object exists and contains data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Properties).to.be.an('object');",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 3000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(3000);",
+							"});",
+							"",
+							"// Test: Error handling for 404 Not Found",
+							"if (pm.response.code === 404) {",
+							"    pm.test(\"404 Not Found - Resource does not exist\", function () {",
+							"        pm.expect(pm.response.code).to.eql(404);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 401 Unauthorized",
+							"if (pm.response.code === 401) {",
+							"    pm.test(\"401 Unauthorized - Authentication required\", function () {",
+							"        pm.expect(pm.response.code).to.eql(401);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 500 Internal Server Error",
+							"if (pm.response.code === 500) {",
+							"    pm.test(\"500 Internal Server Error - Server issue\", function () {",
+							"        pm.expect(pm.response.code).to.eql(500);",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/registrations/{{registrationID}}",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"registrations",
+						"{{registrationID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "License",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 201 Created status code",
+							"pm.test(\"Status code is 201 Created\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"// Test: Validate response body structure with Identity and _links objects",
+							"pm.test(\"Response has Identity and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Id field is present and numeric",
+							"pm.test(\"Identity.Id is present and numeric\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    ",
+							"    // Accept Id as either string or number",
+							"    var id = jsonData.Identity.Id;",
+							"    pm.expect(id).to.satisfy(function(value) {",
+							"        return typeof value === 'string' || typeof value === 'number';",
+							"    }, 'Id should be a string or number');",
+							"    ",
+							"    // If it's a string, verify it can be converted to a valid number",
+							"    var numericId = typeof id === 'string' ? Number(id) : id;",
+							"    pm.expect(numericId).to.not.be.NaN;",
+							"    pm.expect(numericId).to.be.above(0);",
+							"});",
+							"",
+							"// Test: _links.self.href is present and valid",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Save created entity ID to collection variable",
+							"pm.test(\"Save created entity ID to collection variable\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.Identity && jsonData.Identity.Id) {",
+							"        pm.collectionVariables.set(\"created_entity_id\", jsonData.Identity.Id);",
+							"    }",
+							"});",
+							"",
+							"// Extract and save licenseID to environment variable",
+							"pm.test(\"Extract and save licenseID to environment\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.Identity && jsonData.Identity.Id) {",
+							"        pm.environment.set(\"licenseID\", jsonData.Identity.Id);",
+							"        console.log(\"licenseID saved to environment: \" + jsonData.Identity.Id);",
+							"    }",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 5000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+							"});",
+							"",
+							"// Test: Error handling for 400 Bad Request",
+							"if (pm.response.code === 400) {",
+							"    pm.test(\"400 Bad Request - Validate error message\", function () {",
+							"        var jsonData = pm.response.json();",
+							"        pm.expect(jsonData).to.have.property('error');",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"submissionPackReference\": \"112244\",\r\n    \"entityReference\": \"112244\",\r\n    \"entityName\": \"string\",\r\n    \"submissionPackVersion\": \"string\",\r\n    \"requestType\": \"Licensing\",\r\n    \"returnDueDate\": \"2021-07-16T18:02:46.7918081\",\r\n    \"industryType\": \"string\",\r\n    \"industrySubType\": \"string\",\r\n    \"returnEndDate\": \"2021-09-02\",\r\n    \"submissionDate\": \"2021-09-02\",\r\n    \"revisionNumber\": \"string\",\r\n    \"submissionPackName\": \"string\",\r\n    \"resubmissionState\": \"Granted\",\r\n    \"submissionType\": \"test\" \r\n}"
+				},
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/license",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"license"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "License",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 200 OK status code",
+							"pm.test(\"Status code is 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Test: Validate complete response body structure",
+							"pm.test(\"Response has Properties, Identity, Lifecycle, and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Properties');",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('Lifecycle');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Identity object with Id and ItemStatus",
+							"pm.test(\"Identity object has Id and ItemStatus\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    ",
+							"    // Accept Id as either string or number, and verify it's a valid numeric value",
+							"    var id = jsonData.Identity.Id;",
+							"    var isValidId = (typeof id === 'number') || (typeof id === 'string' && !isNaN(Number(id)) && id.trim() !== '');",
+							"    pm.expect(isValidId, 'Id should be a number or a numeric string').to.be.true;",
+							"    ",
+							"    pm.expect(jsonData.Identity).to.have.property('ItemStatus');",
+							"});",
+							"",
+							"// Test: Validate Lifecycle state information",
+							"pm.test(\"Lifecycle object has valid state information\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Lifecycle).to.be.an('object');",
+							"    if (jsonData.Lifecycle.State) {",
+							"        pm.expect(jsonData.Lifecycle.State).to.be.a('string');",
+							"    }",
+							"});",
+							"",
+							"// Test: Validate _links structure",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Test: Validate Properties object exists and is not empty",
+							"pm.test(\"Properties object exists and contains data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Properties).to.be.an('object');",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 3000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(3000);",
+							"});",
+							"",
+							"// Test: Error handling for 404 Not Found",
+							"if (pm.response.code === 404) {",
+							"    pm.test(\"404 response has appropriate error message\", function () {",
+							"        pm.expect(pm.response.text()).to.include(\"not found\");",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/license/{{licenseID}}",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"license",
+						"{{licenseID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Profile",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 201 Created status code",
+							"pm.test(\"Status code is 201 Created\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"// Test: Validate response body structure with Identity and _links objects",
+							"pm.test(\"Response has Identity and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Id field is present and numeric",
+							"pm.test(\"Identity.Id is present and numeric\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    ",
+							"    // Accept Id as either string or number",
+							"    var id = jsonData.Identity.Id;",
+							"    var numericId;",
+							"    ",
+							"    if (typeof id === 'string') {",
+							"        // If string, verify it can be converted to a valid number",
+							"        numericId = Number(id);",
+							"        pm.expect(numericId).to.not.be.NaN;",
+							"    } else if (typeof id === 'number') {",
+							"        numericId = id;",
+							"    } else {",
+							"        throw new Error('Id must be either a string or number');",
+							"    }",
+							"    ",
+							"    // Verify the numeric value is greater than 0",
+							"    pm.expect(numericId).to.be.above(0);",
+							"});",
+							"",
+							"// Test: Validate _links.self.href is present",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Save created entity ID to collection variable",
+							"pm.test(\"Save created entity ID to collection variable\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.Identity && jsonData.Identity.Id) {",
+							"        pm.collectionVariables.set(\"created_entity_id\", jsonData.Identity.Id);",
+							"    }",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 5000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+							"});",
+							"",
+							"// Test: Error handling for 400 Bad Request",
+							"if (pm.response.code === 400) {",
+							"    pm.test(\"400 Bad Request - Invalid input data\", function () {",
+							"        pm.expect(pm.response.code).to.eql(400);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 401 Unauthorized",
+							"if (pm.response.code === 401) {",
+							"    pm.test(\"401 Unauthorized - Authentication required\", function () {",
+							"        pm.expect(pm.response.code).to.eql(401);",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"entityName\": \"CFI Entity\",\r\n  \"entityReference\": \"G0006\"\r\n}"
+				},
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/profile",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Profile",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Validate 200 OK status code",
+							"pm.test(\"Status code is 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Test: Validate complete response body structure",
+							"pm.test(\"Response has Properties, Identity, Lifecycle, and _links objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('Properties');",
+							"    pm.expect(jsonData).to.have.property('Identity');",
+							"    pm.expect(jsonData).to.have.property('Lifecycle');",
+							"    pm.expect(jsonData).to.have.property('_links');",
+							"});",
+							"",
+							"// Test: Validate Identity object with Id and ItemStatus",
+							"pm.test(\"Identity object has Id and ItemStatus\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Identity).to.have.property('Id');",
+							"    pm.expect(jsonData.Identity.Id).to.be.a('number');",
+							"    pm.expect(jsonData.Identity).to.have.property('ItemStatus');",
+							"});",
+							"",
+							"// Test: Validate Lifecycle state information",
+							"pm.test(\"Lifecycle object has valid state information\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Lifecycle).to.be.an('object');",
+							"    if (jsonData.Lifecycle.State) {",
+							"        pm.expect(jsonData.Lifecycle.State).to.be.a('string');",
+							"    }",
+							"});",
+							"",
+							"// Test: Validate _links structure",
+							"pm.test(\"_links.self.href is present and valid\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData._links).to.have.property('self');",
+							"    pm.expect(jsonData._links.self).to.have.property('href');",
+							"    pm.expect(jsonData._links.self.href).to.be.a('string');",
+							"    pm.expect(jsonData._links.self.href).to.not.be.empty;",
+							"});",
+							"",
+							"// Test: Validate Properties object exists and is not empty",
+							"pm.test(\"Properties object exists and contains data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Properties).to.be.an('object');",
+							"});",
+							"",
+							"// Test: Response time validation",
+							"pm.test(\"Response time is less than 3000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(3000);",
+							"});",
+							"",
+							"// Test: Error handling for 404 Not Found",
+							"if (pm.response.code === 404) {",
+							"    pm.test(\"404 Not Found - Resource does not exist\", function () {",
+							"        pm.expect(pm.response.code).to.eql(404);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 401 Unauthorized",
+							"if (pm.response.code === 401) {",
+							"    pm.test(\"401 Unauthorized - Authentication required\", function () {",
+							"        pm.expect(pm.response.code).to.eql(401);",
+							"    });",
+							"}",
+							"",
+							"// Test: Error handling for 500 Internal Server Error",
+							"if (pm.response.code === 500) {",
+							"    pm.test(\"500 Internal Server Error - Server issue\", function () {",
+							"        pm.expect(pm.response.code).to.eql(500);",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Client-Id",
+						"value": "94ebcd1e9ff484fe711ad4f363b6aab1",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://{{host}}/{{pOrg}}/{{catalog}}/v1/appworks/profile/{{created_entity_id}}",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{pOrg}}",
+						"{{catalog}}",
+						"v1",
+						"appworks",
+						"profile",
+						"{{created_entity_id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "created_entity_id",
+			"value": ""
+		},
+		{
+			"key": "genericID",
+			"value": ""
+		}
+	]
+}
